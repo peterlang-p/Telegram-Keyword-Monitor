@@ -39,15 +39,20 @@ An intelligent Python tool that monitors all your Telegram groups in real-time a
    cd Telegram-Keyword-Monitor
    ```
 
-2. **Create configuration:**
+2. **First-time setup:**
    ```bash
-   cp config.example.json config.json
-   # Edit config.json with your API credentials
+   ./first_time_setup.sh
    ```
+   This will:
+   - Create config.json from template
+   - Guide you through API credential setup
+   - Create Telegram session interactively
+   - Start the Docker container
 
-3. **Start the monitor:**
+3. **Regular usage:**
    ```bash
-   ./start.sh
+   ./start.sh  # Start
+   ./stop.sh   # Stop
    ```
 
 ### Option 2: Local Installation
@@ -157,12 +162,15 @@ List of keywords as strings. Supports:
 
 ### First Time Setup
 
+**Docker users:** Use `./first_time_setup.sh` for guided setup.
+
+**Local installation users:**
 1. **Initial run:**
    ```bash
-   source telegram_monitor_env/bin/activate  # if using local installation
-   python main.py
+   source telegram_monitor_env/bin/activate
+   python3 setup_session.py  # Interactive session setup
+   python3 main.py           # Start monitoring
    ```
-   On first start, you'll be prompted to enter your phone number and verification code.
 
 2. **Regular usage:**
    After initial login, the tool runs automatically without re-authentication.

@@ -11,7 +11,7 @@ services:
     # Mount volumes for persistent data
     volumes:
       - ./data:/app/data
-      - ./config.json:/app/config.json:ro
+      - ./config.json:/app/config.json
       - ./logs:/app/logs
     
     # Environment variables (optional)

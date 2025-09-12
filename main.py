@@ -215,8 +215,8 @@ class TelegramKeywordMonitor:
     
     async def send_notification(self, chat_title: str, sender_name: str, 
                               message_text: str, keywords: List[str], 
-                              chat_id: int, message_id: int):
-        """Send notification to Saved Messages."""
+                              chat_id: int, message_id: int, original_message=None):
+        """Send notification to Saved Messages with media support."""
         try:
             # Create message link
             if chat_id < 0:  # Group/Channel
@@ -232,37 +232,82 @@ class TelegramKeywordMonitor:
             formatted_message = self.format_message(message_text)
             keywords_str = ", ".join(keywords)
             
+            # Check if message has media
+            has_media = original_message and (
+                original_message.photo or 
+                original_message.video or 
+                original_message.document or 
+                original_message.sticker or
+                original_message.voice or
+                original_message.video_note or
+                original_message.audio
+            )
+            
+            media_info = ""
+            if has_media:
+                media_types = []
+                if original_message.photo:
+                    media_types.append("📷 Photo")
+                if original_message.video:
+                    media_types.append("🎥 Video")
+                if original_message.document:
+                    media_types.append("📄 Document")
+                if original_message.sticker:
+                    media_types.append("🎭 Sticker")
+                if original_message.voice:
+                    media_types.append("🎤 Voice")
+                if original_message.video_note:
+                    media_types.append("📹 Video Note")
+                if original_message.audio:
+                    media_types.append("🎵 Audio")
+                
+                media_info = f"**Media:** {', '.join(media_types)}\n"
+            
             notification = (
                 f"🔍 **Keyword Match Found!**\n\n"
                 f"**Keywords:** {keywords_str}\n"
                 f"**Group:** {chat_title}\n"
                 f"**Sender:** {sender_name}\n"
-                f"**Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                f"**Message:**\n{formatted_message}\n\n"
+                f"**Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"{media_info}"
+                f"\n**Message:**\n{formatted_message}\n\n"
                 f"**Link:** {message_link}"
             )
             
             # Get own user ID for Saved Messages
             me = await self.client.get_me()
             
-            # Send to Saved Messages (self) - try multiple methods
+            # Send notification with media if available
             try:
-                # Method 1: Send to 'me'
-                await self.client.send_message('me', notification)
-                logging.info(f"✅ Notification sent via 'me' for keywords: {keywords_str} in {chat_title}")
+                if has_media:
+                    # Forward the original message first (with media)
+                    await self.client.forward_messages('me', original_message)
+                    
+                    # Then send the notification text
+                    await self.client.send_message('me', notification)
+                    
+                    logging.info(f"✅ Notification with media sent for keywords: {keywords_str} in {chat_title}")
+                else:
+                    # Send text-only notification
+                    await self.client.send_message('me', notification)
+                    logging.info(f"✅ Text notification sent for keywords: {keywords_str} in {chat_title}")
+                    
             except Exception as e1:
                 logging.warning(f"Failed to send via 'me': {e1}")
                 try:
-                    # Method 2: Send to own user ID
-                    await self.client.send_message(me.id, notification)
+                    # Fallback: Send to own user ID
+                    if has_media:
+                        await self.client.forward_messages(me.id, original_message)
+                        await self.client.send_message(me.id, notification)
+                    else:
+                        await self.client.send_message(me.id, notification)
                     logging.info(f"✅ Notification sent via user ID for keywords: {keywords_str} in {chat_title}")
                 except Exception as e2:
                     logging.warning(f"Failed to send via user ID: {e2}")
                     try:
-                        # Method 3: Send to self using PeerUser
-                        from telethon.tl.types import PeerUser
+                        # Final fallback: Send text-only to PeerUser
                         await self.client.send_message(PeerUser(me.id), notification)
-                        logging.info(f"✅ Notification sent via PeerUser for keywords: {keywords_str} in {chat_title}")
+                        logging.info(f"✅ Text-only notification sent via PeerUser for keywords: {keywords_str} in {chat_title}")
                     except Exception as e3:
                         logging.error(f"❌ All notification methods failed: {e1}, {e2}, {e3}")
                         # Fallback: Log the notification
@@ -364,14 +409,15 @@ class TelegramKeywordMonitor:
             # Get sender info
             sender_name = await self.get_sender_info(event)
             
-            # Send notification
+            # Send notification with original message for media support
             await self.send_notification(
                 chat_title=chat_title,
                 sender_name=sender_name,
                 message_text=message_text,
                 keywords=found_keywords,
                 chat_id=chat_id,
-                message_id=event.message.id
+                message_id=event.message.id,
+                original_message=event.message
             )
             
         except Exception as e:

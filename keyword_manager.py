@@ -15,17 +15,22 @@ class KeywordManager:
     
     def __init__(self, config_path: str = "config.json"):
         self.config_path = config_path
-        self.commands = {
+        # Commands that need async (take args parameter)
+        self.async_commands = {
             '/keywords': self.list_keywords,
             '/add': self.add_keyword,
             '/remove': self.remove_keyword,
             '/clear': self.clear_keywords,
-            '/help': self.show_help,
             '/status': self.show_status,
             '/groups': self.manage_groups,
             '/whitelist': self.manage_whitelist,
             '/blacklist': self.manage_blacklist,
             '/duplicates': self.manage_duplicates
+        }
+        
+        # Commands that are sync (no args parameter)
+        self.sync_commands = {
+            '/help': self.show_help
         }
     
     def load_config(self) -> Dict:
@@ -56,8 +61,12 @@ class KeywordManager:
             args = parts[1:] if len(parts) > 1 else []
             
             # Execute command
-            if command in self.commands:
-                return await self.commands[command](args)
+            if command in self.sync_commands:
+                # Sync commands (like /help)
+                return self.sync_commands[command]()
+            elif command in self.async_commands:
+                # Async commands (most commands)
+                return await self.async_commands[command](args)
             else:
                 return f"❌ Unbekannter Befehl: {command}\n\n{self.show_help()}"
                 
@@ -166,7 +175,8 @@ class KeywordManager:
         response += f"🔍 Keywords: {len(keywords)}\n"
         response += f"📝 Case Sensitive: {'Ja' if settings.get('case_sensitive', False) else 'Nein'}\n"
         response += f"📄 Vollständige Nachrichten: {'Ja' if settings.get('send_full_message', True) else 'Nein'}\n"
-        response += f"📏 Max. Nachrichtenlänge: {settings.get('max_message_length', 500)}\n\n"
+        response += f"📏 Max. Nachrichtenlänge: {settings.get('max_message_length', 500)}\n"
+        response += f"📷 Medien weiterleiten: {'Ja' if settings.get('forward_media', True) else 'Nein'}\n\n"
         
         whitelist = groups.get('whitelist', [])
         blacklist = groups.get('blacklist', [])

@@ -14,7 +14,8 @@
   "settings": {
     "case_sensitive": false,
     "send_full_message": true,
-    "max_message_length": 500
+    "max_message_length": 500,
+    "forward_media": true
   },
   "groups": {
     "whitelist": [],
