@@ -3,89 +3,91 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-peterlang--p%2FTelegram--Keyword--Monitor-blue.svg)](https://github.com/peterlang-p/Telegram-Keyword-Monitor)
 
-Ein intelligentes Python-Tool, das alle Telegram-Gruppen überwacht, in denen Sie Mitglied sind, und Sie über "Saved Messages" benachrichtigt, wenn definierte Keywords gefunden werden.
+An intelligent Python tool that monitors all your Telegram groups in real-time and sends notifications to your "Saved Messages" when defined keywords are found.
 
-## 🎯 Hauptfunktionen
+## 🎯 Key Features
 
-- 🔍 **Echtzeit-Überwachung** aller Telegram-Gruppen
-- 💬 **Telegram-Befehle** zur einfachen Verwaltung
-- 🚫 **Duplikat-Erkennung** verhindert mehrfache Benachrichtigungen
-- 🎛️ **Flexible Filterung** mit Whitelist/Blacklist
-- 🐳 **Docker-Support** für einfaches Deployment
-- 🔒 **Sicher** - Nur lesender Zugriff, keine automatischen Antworten
+- 🔍 **Real-time monitoring** of all Telegram groups you're a member of
+- 💬 **Telegram commands** for easy management via chat
+- 🚫 **Duplicate detection** prevents multiple notifications for the same message
+- 🎛️ **Flexible filtering** with whitelist/blacklist functionality
+- 🐳 **Docker support** for easy deployment and management
+- 🔒 **Secure** - Read-only access, no automatic replies in groups
 
-## Features
+## ✨ Features
 
-- ✅ Überwachung aller Gruppen/Kanäle, in denen der Account Mitglied ist
-- ✅ Flexible Keyword-Definition (einfache Strings oder Regex)
-- ✅ **Keyword-Verwaltung direkt über Telegram-Befehle**
-- ✅ Benachrichtigung über Saved Messages mit Deep Links
-- ✅ Whitelist/Blacklist für Gruppen (auch über Telegram steuerbar)
-- ✅ Session-Speicherung (kein wiederholter Login nötig)
-- ✅ Umfassendes Logging
-- ✅ Konfigurierbare Nachrichtenlänge
-- ✅ Echtzeit-Konfiguration ohne Neustart
+- ✅ **Monitor all groups/channels** where your account is a member
+- ✅ **Flexible keyword definition** (simple strings or regex patterns)
+- ✅ **Keyword management via Telegram commands** - no file editing needed
+- ✅ **Smart notifications** to Saved Messages with deep links to original messages
+- ✅ **Group filtering** with whitelist/blacklist (manageable via Telegram)
+- ✅ **Session persistence** - no repeated login required
+- ✅ **Comprehensive logging** and error handling
+- ✅ **Configurable message formatting** and length limits
+- ✅ **Real-time configuration** updates without restart
+- ✅ **Duplicate detection** prevents spam from cross-posted messages
 
-## 🚀 Schnellstart
+## 🚀 Quick Start
 
-### Option 1: Docker (Empfohlen)
+### Option 1: Docker (Recommended)
 
-1. **Repository klonen:**
+1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/telegram-keyword-monitor.git
-   cd telegram-keyword-monitor
+   git clone https://github.com/peterlang-p/Telegram-Keyword-Monitor.git
+   cd Telegram-Keyword-Monitor
    ```
 
-2. **Konfiguration erstellen:**
+2. **Create configuration:**
    ```bash
    cp config.example.json config.json
-   # Bearbeiten Sie config.json mit Ihren API-Credentials
+   # Edit config.json with your API credentials
    ```
 
-3. **Starten:**
+3. **Start the monitor:**
    ```bash
    ./start.sh
    ```
 
-### Option 2: Lokale Installation
+### Option 2: Local Installation
 
-1. **Repository klonen:**
+1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/telegram-keyword-monitor.git
-   cd telegram-keyword-monitor
+   git clone https://github.com/peterlang-p/Telegram-Keyword-Monitor.git
+   cd Telegram-Keyword-Monitor
    ```
 
-2. **Virtual Environment erstellen:**
+2. **Create virtual environment:**
    ```bash
    python3 -m venv telegram_monitor_env
    source telegram_monitor_env/bin/activate
    pip install -r requirements.txt
    ```
 
-3. **Konfiguration:**
+3. **Setup configuration:**
    ```bash
    cp config.example.json config.json
-   # Bearbeiten Sie config.json mit Ihren Credentials
+   # Edit config.json with your credentials
    ```
 
-4. **Starten:**
+4. **Run the monitor:**
    ```bash
    python3 main.py
    ```
 
-## 🔑 API Credentials besorgen
+## 🔑 Getting API Credentials
 
-1. Gehen Sie zu https://my.telegram.org
-2. Loggen Sie sich mit Ihrer Telefonnummer ein
-3. Gehen Sie zu "API development tools"
-4. Erstellen Sie eine neue App
-5. Notieren Sie sich `api_id` und `api_hash`
-6. Tragen Sie diese in `config.json` ein
+1. Go to https://my.telegram.org
+2. Log in with your phone number
+3. Go to "API development tools"
+4. Create a new application
+5. Note down your `api_id` and `api_hash`
+6. Add them to your `config.json` file
 
-## Konfiguration
+## ⚙️ Configuration
 
-### config.json Struktur:
+### config.json Structure:
 
 ```json
 {
@@ -117,73 +119,83 @@ Ein intelligentes Python-Tool, das alle Telegram-Gruppen überwacht, in denen Si
 }
 ```
 
-### Konfigurationsoptionen:
+### Configuration Options:
 
 #### Telegram
-- `api_id`: Ihre Telegram API ID
-- `api_hash`: Ihr Telegram API Hash  
-- `session_name`: Name der Session-Datei (wird automatisch erstellt)
+- `api_id`: Your Telegram API ID
+- `api_hash`: Your Telegram API Hash  
+- `session_name`: Session file name (created automatically)
 
 #### Keywords
-Liste von Keywords als Strings. Unterstützt:
-- **Einfache Strings:** `"python"`, `"telegram"`
-- **Regex-Patterns:** `"(?i)AI|artificial intelligence"` (case-insensitive)
-- **Komplexe Regex:** `"\\b(machine learning|ML)\\b"`
+List of keywords as strings. Supports:
+- **Simple strings:** `"python"`, `"telegram"`
+- **Regex patterns:** `"(?i)AI|artificial intelligence"` (case-insensitive)
+- **Complex regex:** `"\\b(machine learning|ML)\\b"`
 
-#### Einstellungen
-- `case_sensitive`: Groß-/Kleinschreibung beachten (Standard: false)
-- `send_full_message`: Vollständige Nachricht senden oder kürzen (Standard: true)
-- `max_message_length`: Maximale Nachrichtenlänge bei Kürzung (Standard: 500)
+#### Settings
+- `case_sensitive`: Whether to match case exactly (default: false)
+- `send_full_message`: Send complete message or truncate (default: true)
+- `max_message_length`: Maximum message length when truncating (default: 500)
 
-#### Gruppen-Filter
-- `whitelist`: Nur diese Gruppen überwachen (leer = alle Gruppen)
-  - Kann Gruppennamen oder Chat-IDs enthalten
-- `blacklist`: Diese Gruppen ausschließen
-  - Kann Gruppennamen oder Chat-IDs enthalten
+#### Group Filters
+- `whitelist`: Only monitor these groups (empty = monitor all groups)
+  - Can contain group names or chat IDs
+- `blacklist`: Exclude these groups from monitoring
+  - Can contain group names or chat IDs
 
 #### Logging
-- `enabled`: Logging aktivieren (Standard: true)
-- `log_file`: Pfad zur Log-Datei (Standard: "keyword_monitor.log")
-- `log_level`: Log-Level (DEBUG, INFO, WARNING, ERROR)
+- `enabled`: Enable logging (default: true)
+- `log_file`: Path to log file (default: "keyword_monitor.log")
+- `log_level`: Logging level (DEBUG, INFO, WARNING, ERROR)
 
-## Verwendung
+#### Duplicate Detection
+- `enabled`: Enable duplicate message detection (default: true)
+- `expiry_hours`: How long to remember message hashes (default: 24)
+- `include_sender`: Include sender in hash calculation (default: true)
 
-1. **Erstmalige Ausführung:**
+## 📱 Usage
+
+### First Time Setup
+
+1. **Initial run:**
    ```bash
-   source telegram_monitor_env/bin/activate
+   source telegram_monitor_env/bin/activate  # if using local installation
    python main.py
    ```
-   Beim ersten Start werden Sie aufgefordert, Ihre Telefonnummer und einen Bestätigungscode einzugeben.
+   On first start, you'll be prompted to enter your phone number and verification code.
 
-2. **Reguläre Ausführung:**
-   Nach dem ersten Login läuft das Tool automatisch, ohne erneute Anmeldung.
+2. **Regular usage:**
+   After initial login, the tool runs automatically without re-authentication.
 
-3. **Keywords über Telegram verwalten:**
-   Öffnen Sie Ihre "Saved Messages" in Telegram und verwenden Sie folgende Befehle:
-   
-   ```
-   /help              - Alle verfügbaren Befehle anzeigen
-   /keywords          - Aktuelle Keywords auflisten
-   /add python        - Keyword hinzufügen
-   /remove 1          - Keyword entfernen (per Nummer)
-   /status            - Monitor-Status anzeigen
-   ```
+### Managing Keywords via Telegram
 
-4. **Stoppen:**
-   Drücken Sie `Ctrl+C` um das Tool zu beenden.
+Open your **"Saved Messages"** in Telegram and use these commands:
 
-## Benachrichtigungen
+```
+/help              - Show all available commands
+/keywords          - List current keywords
+/add python        - Add a keyword
+/remove 1          - Remove keyword by number
+/status            - Show monitor status
+```
 
-Wenn ein Keyword gefunden wird, erhalten Sie eine Nachricht in Ihren "Saved Messages" mit folgenden Informationen:
+### Stopping the Monitor
 
-- Gefundene Keywords
-- Gruppenname
-- Absender
-- Zeitstempel
-- Nachrichtentext (vollständig oder gekürzt)
-- Deep Link zur Original-Nachricht
+- **Local:** Press `Ctrl+C`
+- **Docker:** `./stop.sh` or `docker-compose down`
 
-**Beispiel-Benachrichtigung:**
+## 📬 Notifications
+
+When a keyword is found, you'll receive a message in your "Saved Messages" with:
+
+- Found keywords
+- Group name
+- Sender information
+- Timestamp
+- Message text (full or truncated)
+- Deep link to original message
+
+**Example notification:**
 ```
 🔍 **Keyword Match Found!**
 
@@ -198,39 +210,47 @@ Looking for help with python telegram bot development...
 **Link:** https://t.me/c/1234567890/123
 ```
 
-## Telegram-Befehle
+## 💬 Telegram Commands
 
-Sie können Keywords und Einstellungen direkt über Telegram verwalten, ohne die Konfigurationsdatei zu bearbeiten. Alle Befehle funktionieren in Ihren **"Saved Messages"**.
+You can manage keywords and settings directly via Telegram without editing configuration files. All commands work in your **"Saved Messages"**.
 
-### 📝 Keyword-Verwaltung
+### 📝 Keyword Management
 
-| Befehl | Beschreibung | Beispiel |
-|--------|-------------|----------|
-| `/keywords` | Alle Keywords anzeigen | `/keywords` |
-| `/add <keyword>` | Keyword hinzufügen | `/add python` |
-| `/remove <nummer\|keyword>` | Keyword entfernen | `/remove 1` oder `/remove python` |
-| `/clear` | Alle Keywords löschen | `/clear` |
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/keywords` | List all keywords | `/keywords` |
+| `/add <keyword>` | Add a keyword | `/add python` |
+| `/remove <number\|keyword>` | Remove keyword | `/remove 1` or `/remove python` |
+| `/clear` | Delete all keywords | `/clear` |
 
-### 🏢 Gruppen-Verwaltung
+### 🏢 Group Management
 
-| Befehl | Beschreibung | Beispiel |
-|--------|-------------|----------|
-| `/groups` | Gruppen-Hilfe anzeigen | `/groups` |
-| `/whitelist add <gruppe>` | Gruppe zur Whitelist | `/whitelist add Python Jobs` |
-| `/whitelist list` | Whitelist anzeigen | `/whitelist list` |
-| `/blacklist add <gruppe>` | Gruppe zur Blacklist | `/blacklist add Spam Group` |
-| `/blacklist list` | Blacklist anzeigen | `/blacklist list` |
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/groups` | Show group management help | `/groups` |
+| `/whitelist add <group>` | Add group to whitelist | `/whitelist add Python Jobs` |
+| `/whitelist list` | Show whitelist | `/whitelist list` |
+| `/blacklist add <group>` | Add group to blacklist | `/blacklist add Spam Group` |
+| `/blacklist list` | Show blacklist | `/blacklist list` |
 
-### ℹ️ Status & Hilfe
+### 🔄 Duplicate Detection
 
-| Befehl | Beschreibung |
-|--------|-------------|
-| `/status` | Monitor-Status und Statistiken anzeigen |
-| `/help` | Alle verfügbaren Befehle auflisten |
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/duplicates` | Show duplicate detection settings | `/duplicates` |
+| `/duplicates on/off` | Enable/disable duplicate detection | `/duplicates off` |
+| `/duplicates hours <number>` | Set hash expiry time | `/duplicates hours 12` |
 
-### 🎯 Beispiele für Keyword-Befehle
+### ℹ️ Status & Help
 
-**Einfache Keywords:**
+| Command | Description |
+|---------|-------------|
+| `/status` | Show monitor status and statistics |
+| `/help` | List all available commands |
+
+### 🎯 Command Examples
+
+**Simple keywords:**
 ```
 /add python
 /add telegram
@@ -238,7 +258,7 @@ Sie können Keywords und Einstellungen direkt über Telegram verwalten, ohne die
 /add freelancer
 ```
 
-**Regex-Patterns (erweitert):**
+**Regex patterns (advanced):**
 ```
 /add (?i)machine learning
 /add (?i)AI|artificial intelligence
@@ -246,7 +266,7 @@ Sie können Keywords und Einstellungen direkt über Telegram verwalten, ohne die
 /add \bjava\b
 ```
 
-**Gruppen-Management:**
+**Group management:**
 ```
 /whitelist add Python Developers
 /blacklist add Spam Group
@@ -254,15 +274,15 @@ Sie können Keywords und Einstellungen direkt über Telegram verwalten, ohne die
 /status
 ```
 
-### 💡 Vorteile der Telegram-Steuerung
+### 💡 Benefits of Telegram Control
 
-- ✅ **Keine Datei-Bearbeitung** mehr nötig
-- ✅ **Änderungen von überall** (Handy, Desktop, Web)
-- ✅ **Sofortige Bestätigung** der Änderungen
-- ✅ **Echtzeit-Updates** ohne Neustart des Monitors
-- ✅ **Einfache Verwaltung** auch unterwegs
+- ✅ **No file editing** required
+- ✅ **Manage from anywhere** (mobile, desktop, web)
+- ✅ **Instant confirmation** of changes
+- ✅ **Real-time updates** without restart
+- ✅ **Easy management** on the go
 
-## Dauerhafte Ausführung
+## 🔄 Production Deployment
 
 ### Mit systemd (Linux):
 
@@ -313,34 +333,44 @@ Sie können Keywords und Einstellungen direkt über Telegram verwalten, ohne die
    docker run -d --name telegram-monitor -v $(pwd)/config.json:/app/config.json telegram-monitor
    ```
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-### Häufige Probleme:
+### Common Issues:
 
 1. **"Invalid API_ID or API_HASH"**
-   - Überprüfen Sie Ihre Credentials in config.json
-   - Stellen Sie sicher, dass api_id eine Zahl (ohne Anführungszeichen) ist
+   - Check your credentials in config.json
+   - Ensure api_id is a number (without quotes)
 
 2. **"Config file not found"**
-   - Stellen Sie sicher, dass config.json im gleichen Verzeichnis wie main.py liegt
+   - Make sure config.json is in the same directory as main.py
+   - Copy from config.example.json if missing
 
 3. **"No keywords found"**
-   - Verwenden Sie `/keywords` in Saved Messages um aktuelle Keywords zu sehen
-   - Fügen Sie Keywords mit `/add <keyword>` hinzu
-   - Testen Sie Regex-Patterns mit einem Online-Regex-Tester
+   - Use `/keywords` in Saved Messages to see current keywords
+   - Add keywords with `/add <keyword>`
+   - Test regex patterns with an online regex tester
 
-4. **Session-Probleme**
-   - Löschen Sie die .session-Datei und starten Sie neu
-   - Bei wiederholten Problemen: Neuen session_name verwenden
+4. **Session problems**
+   - Delete .session files and restart
+   - Use a new session_name if problems persist
 
-5. **Befehle funktionieren nicht**
-   - Stellen Sie sicher, dass Sie die Befehle in "Saved Messages" senden
-   - Befehle müssen mit `/` beginnen (z.B. `/help`)
-   - Prüfen Sie die Logs für Fehlermeldungen
+5. **Commands not working**
+   - Make sure you send commands in "Saved Messages"
+   - Commands must start with `/` (e.g., `/help`)
+   - Check logs for error messages
 
-### Logs überprüfen:
+6. **Docker issues**
+   - Check container status: `docker-compose ps`
+   - View logs: `docker-compose logs telegram-monitor`
+   - Restart: `docker-compose restart telegram-monitor`
+
+### Checking Logs:
 ```bash
+# Local installation
 tail -f keyword_monitor.log
+
+# Docker
+docker-compose logs -f telegram-monitor
 ```
 
 ## 🐳 Docker Commands
@@ -362,42 +392,54 @@ docker-compose ps
 docker-compose restart telegram-monitor
 ```
 
-## 📁 Projektstruktur
+## 📁 Project Structure
 
 ```
-telegram-keyword-monitor/
-├── main.py                 # Hauptanwendung
-├── keyword_manager.py      # Telegram-Befehle
-├── config.example.json     # Beispiel-Konfiguration
-├── requirements.txt        # Python-Abhängigkeiten
-├── Dockerfile             # Docker-Container
-├── docker-compose.yml     # Docker-Service
-├── start.sh               # Start-Script
-├── stop.sh                # Stop-Script
-├── README.md              # Diese Datei
-└── data/                  # Session-Dateien (wird erstellt)
-    └── logs/              # Log-Dateien (wird erstellt)
+Telegram-Keyword-Monitor/
+├── main.py                 # Main application
+├── keyword_manager.py      # Telegram command handlers
+├── config.example.json     # Example configuration
+├── requirements.txt        # Python dependencies
+├── Dockerfile             # Docker container definition
+├── docker-compose.yml     # Docker service configuration
+├── start.sh               # Start script
+├── stop.sh                # Stop script
+├── README.md              # This file
+├── LICENSE                # MIT license
+├── CONTRIBUTING.md         # Contribution guidelines
+├── CHANGELOG.md           # Version history
+└── data/                  # Session files (created at runtime)
+    └── logs/              # Log files (created at runtime)
 ```
 
 ## 🤝 Contributing
 
-1. Fork das Repository
-2. Erstellen Sie einen Feature Branch (`git checkout -b feature/amazing-feature`)
-3. Committen Sie Ihre Änderungen (`git commit -m 'Add amazing feature'`)
-4. Pushen Sie den Branch (`git push origin feature/amazing-feature`)
-5. Öffnen Sie einen Pull Request
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 🔒 Sicherheit
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-- **API-Credentials:** Teilen Sie niemals Ihre `api_id` und `api_hash`
-- **Session-Dateien:** Sind verschlüsselt, aber halten Sie sie privat
-- **Nur lesend:** Das Tool sendet keine Nachrichten in Gruppen, nur an sich selbst
-- **Docker:** Läuft als Non-Root User für zusätzliche Sicherheit
+## 🔒 Security
 
-## 📄 Lizenz
+- **API Credentials:** Never share your `api_id` and `api_hash`
+- **Session Files:** Are encrypted but keep them private
+- **Read-only:** The tool only reads messages, never sends to groups
+- **Docker:** Runs as non-root user for additional security
+- **Data Privacy:** All data stays local, nothing is sent to external services
 
-Dieses Projekt steht unter der MIT-Lizenz. Siehe [LICENSE](LICENSE) für Details.
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## ⚠️ Disclaimer
 
-Dieses Tool ist für den privaten Gebrauch bestimmt. Beachten Sie die Telegram-Nutzungsbedingungen und verwenden Sie es verantwortungsvoll.
+This tool is intended for personal use. Please comply with Telegram's Terms of Service and use responsibly. The authors are not responsible for any misuse of this software.
+
+## 🌟 Star History
+
+If you find this project useful, please consider giving it a star on GitHub!
+
+[![Star History Chart](https://api.star-history.com/svg?repos=peterlang-p/Telegram-Keyword-Monitor&type=Date)](https://star-history.com/#peterlang-p/Telegram-Keyword-Monitor&Date)
