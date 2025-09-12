@@ -7,12 +7,13 @@ services:
       dockerfile: Dockerfile
     container_name: telegram-keyword-monitor
     restart: unless-stopped
+    user: "1000:1000"
     
     # Mount volumes for persistent data
     volumes:
-      - ./data:/app/data
-      - ./config.json:/app/config.json
-      - ./logs:/app/logs
+      - ./data:/app/data:rw
+      - ./config.json:/app/config.json:rw
+      - ./logs:/app/logs:rw
     
     # Environment variables (optional)
     environment:
