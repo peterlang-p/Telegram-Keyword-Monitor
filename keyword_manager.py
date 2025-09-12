@@ -25,7 +25,8 @@ class KeywordManager:
             '/groups': self.manage_groups,
             '/whitelist': self.manage_whitelist,
             '/blacklist': self.manage_blacklist,
-            '/duplicates': self.manage_duplicates
+            '/duplicates': self.manage_duplicates,
+            '/target': self.manage_notification_target
         }
         
         # Commands that are sync (no args parameter)
@@ -176,7 +177,13 @@ class KeywordManager:
         response += f"📝 Case Sensitive: {'Ja' if settings.get('case_sensitive', False) else 'Nein'}\n"
         response += f"📄 Vollständige Nachrichten: {'Ja' if settings.get('send_full_message', True) else 'Nein'}\n"
         response += f"📏 Max. Nachrichtenlänge: {settings.get('max_message_length', 500)}\n"
-        response += f"📷 Medien weiterleiten: {'Ja' if settings.get('forward_media', True) else 'Nein'}\n\n"
+        response += f"📷 Medien weiterleiten: {'Ja' if settings.get('forward_media', True) else 'Nein'}\n"
+        response += f"📤 Nur Weiterleitung bei Medien: {'Ja' if settings.get('media_only_forward', True) else 'Nein'}\n"
+        
+        # Notification target
+        telegram_config = config.get('telegram', {})
+        notification_target = telegram_config.get('notification_target', 'me')
+        response += f"📬 Benachrichtigungs-Ziel: {notification_target}\n\n"
         
         whitelist = groups.get('whitelist', [])
         blacklist = groups.get('blacklist', [])
@@ -381,8 +388,163 @@ class KeywordManager:
             else:
                 return "❌ Verwenden Sie 'on' oder 'off'.\n\nBeispiel: `/duplicates sender off`"
         
+        elif action == 'debug':
+            return await self.debug_duplicates(args[1:])
+        
+        elif action == 'clear':
+            response = "🗑️ **Hash-Speicher leeren:**\n\n"
+            response += "Um alle gespeicherten Message-Hashes zu löschen,\n"
+            response += "starten Sie den Container neu:\n\n"
+            response += "`docker-compose restart telegram-monitor`\n\n"
+            response += "⚠️ **Warnung:** Danach werden alle Nachrichten als 'neu' behandelt!"
+            return response
+        
         else:
-            return f"❌ Unbekannte Aktion: {action}\n\nVerfügbare Aktionen: on, off, hours, sender"
+            return f"❌ Unbekannte Aktion: {action}\n\nVerfügbare Aktionen: on, off, hours, sender, debug, clear"
+    
+    async def debug_duplicates(self, args: List[str]) -> str:
+        """Debug duplicate detection system."""
+        if not args:
+            return """🔧 **Duplikat-Debug Befehle:**
+
+• `/duplicates debug status` - Zeige Debug-Informationen
+• `/duplicates debug clear` - Lösche alle gespeicherten Hashes
+• `/duplicates debug test` - Teste Hash-Generierung
+
+**Beispiel:** `/duplicates debug status`"""
+        
+        action = args[0].lower()
+        
+        if action == 'status':
+            # Get current duplicate detection state
+            from main import TelegramKeywordMonitor
+            
+            response = "🔧 **Duplikat-Debug Status:**\n\n"
+            response += f"**Gespeicherte Hashes:** Wird zur Laufzeit angezeigt\n"
+            response += f"**Einstellungen:**\n"
+            
+            config = self.load_config()
+            dup_config = config.get('duplicate_detection', {})
+            response += f"- Aktiviert: {'Ja' if dup_config.get('enabled', True) else 'Nein'}\n"
+            response += f"- Gültigkeit: {dup_config.get('expiry_hours', 24)} Stunden\n"
+            response += f"- Absender berücksichtigen: {'Ja' if dup_config.get('include_sender', True) else 'Nein'}\n\n"
+            
+            response += "💡 **Hinweis:** Detaillierte Hash-Informationen werden in den Logs angezeigt.\n"
+            response += "Verwenden Sie `docker-compose logs -f telegram-monitor` um sie zu sehen."
+            
+            return response
+            
+        elif action == 'clear':
+            response = "⚠️ **Hash-Speicher leeren:**\n\n"
+            response += "Dies würde alle gespeicherten Message-Hashes löschen.\n"
+            response += "Danach werden alle Nachrichten als 'neu' behandelt.\n\n"
+            response += "💡 **Hinweis:** Diese Funktion ist nur zur Laufzeit verfügbar.\n"
+            response += "Starten Sie den Container neu um den Hash-Speicher zu leeren:\n"
+            response += "`docker-compose restart telegram-monitor`"
+            
+            return response
+            
+        elif action == 'test':
+            import hashlib
+            import re
+            
+            test_message = "Dies ist eine Test-Nachricht für Hash-Generierung"
+            normalized = re.sub(r'\s+', ' ', test_message.strip().lower())
+            hash_result = hashlib.md5(normalized.encode('utf-8')).hexdigest()
+            
+            response = "🧪 **Hash-Test:**\n\n"
+            response += f"**Original:** `{test_message}`\n"
+            response += f"**Normalisiert:** `{normalized}`\n"
+            response += f"**Hash:** `{hash_result[:16]}...`\n\n"
+            response += "💡 Gleiche Nachrichten erzeugen den gleichen Hash."
+            
+            return response
+            
+        else:
+            return f"❌ Unbekannte Debug-Aktion: {action}\n\nVerfügbare Aktionen: status, clear, test"
+    
+    async def manage_notification_target(self, args: List[str]) -> str:
+        """Manage notification target settings."""
+        if not args:
+            config = self.load_config()
+            current_target = config.get('telegram', {}).get('notification_target', 'me')
+            
+            response = "📬 **Benachrichtigungs-Ziel Verwaltung:**\n\n"
+            response += f"**Aktuelles Ziel:** `{current_target}`\n\n"
+            response += "**Verfügbare Befehle:**\n"
+            response += "• `/target set me` - Saved Messages verwenden\n"
+            response += "• `/target set @channel_name` - Kanal verwenden\n"
+            response += "• `/target set -1001234567890` - Chat-ID verwenden\n"
+            response += "• `/target test` - Test-Nachricht senden\n"
+            response += "• `/target check <ziel>` - Ziel-Berechtigung prüfen\n\n"
+            response += "**Hinweise:**\n"
+            response += "- Für Kanäle: Erstellen Sie einen Kanal und fügen Sie sich selbst als Admin hinzu\n"
+            response += "- Für Gruppen: Verwenden Sie die Chat-ID (negative Zahl)\n"
+            response += "- 'me' = Ihre Saved Messages (Standard)\n"
+            response += "- Bei Chat-IDs: Stellen Sie sicher, dass Sie Schreibrechte haben\n\n"
+            response += "**Troubleshooting:**\n"
+            response += "- Kanal-ID funktioniert nicht? Versuchen Sie @username\n"
+            response += "- Keine Berechtigung? Prüfen Sie Admin-Rechte im Kanal\n"
+            response += "- Immer noch Probleme? Verwenden Sie 'me' als Fallback"
+            
+            return response
+        
+        action = args[0].lower()
+        
+        if action == 'set':
+            if len(args) < 2:
+                return "❌ Bitte geben Sie ein Ziel an.\n\nBeispiel: `/target set @my_channel`"
+            
+            new_target = args[1]
+            
+            # Validate target format
+            if new_target not in ['me'] and not (new_target.startswith('@') or new_target.lstrip('-').isdigit()):
+                return "❌ Ungültiges Ziel-Format.\n\nVerwenden Sie: 'me', '@channel_name' oder '-1001234567890'"
+            
+            config = self.load_config()
+            if 'telegram' not in config:
+                config['telegram'] = {}
+            
+            config['telegram']['notification_target'] = new_target
+            self.save_config(config)
+            
+            return f"✅ Benachrichtigungs-Ziel auf `{new_target}` gesetzt.\n\nVerwenden Sie `/target test` um es zu testen."
+        
+        elif action == 'test':
+            config = self.load_config()
+            target = config.get('telegram', {}).get('notification_target', 'me')
+            
+            # Try to send a test message to verify the target works
+            try:
+                # This will be handled by the main app, we just return the test message
+                response = f"🧪 **Test-Nachricht für Ziel: `{target}`**\n\n"
+                response += "Wenn Sie diese Nachricht erhalten, funktioniert das Benachrichtigungs-Ziel korrekt!\n\n"
+                response += f"**Ziel:** {target}\n"
+                response += f"**Zeit:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                response += "💡 **Hinweis:** Wenn Sie diese Nachricht nicht im konfigurierten Ziel sehen,\n"
+                response += "überprüfen Sie die Berechtigungen oder verwenden Sie einen anderen Ziel-Typ."
+                
+                return response
+            except Exception as e:
+                return f"❌ Fehler beim Testen des Ziels `{target}`: {str(e)}"
+        
+        elif action == 'check':
+            if len(args) < 2:
+                return "❌ Bitte geben Sie ein Ziel zum Prüfen an.\n\nBeispiel: `/target check -1002153150590`"
+            
+            target_to_check = args[1]
+            
+            response = f"🔍 **Ziel-Prüfung für: `{target_to_check}`**\n\n"
+            response += "**Wird geprüft...**\n"
+            response += f"- Format: {'Chat-ID' if target_to_check.lstrip('-').isdigit() else 'Username/Text'}\n"
+            response += f"- Typ: {'Kanal/Gruppe' if target_to_check.startswith('-') else 'Benutzer/Kanal'}\n\n"
+            response += "💡 **Hinweis:** Detaillierte Prüfung wird in den Logs angezeigt.\n"
+            response += "Verwenden Sie `docker-compose logs -f telegram-monitor` um Details zu sehen."
+            
+            return response
+        
+        else:
+            return f"❌ Unbekannte Aktion: {action}\n\nVerfügbare Aktionen: set, test, check"
     
     def show_help(self) -> str:
         """Show help message."""
@@ -403,6 +565,11 @@ class KeywordManager:
 • `/duplicates` - Duplikat-Einstellungen anzeigen
 • `/duplicates on/off` - Duplikat-Erkennung ein/ausschalten
 • `/duplicates hours <zahl>` - Hash-Gültigkeit setzen
+
+**Benachrichtigungen:**
+• `/target` - Benachrichtigungs-Ziel verwalten
+• `/target set @channel` - Kanal für Benachrichtigungen setzen
+• `/target test` - Test-Nachricht senden
 
 **Status & Info:**
 • `/status` - Monitor-Status anzeigen

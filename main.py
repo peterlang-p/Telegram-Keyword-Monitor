@@ -274,62 +274,144 @@ class TelegramKeywordMonitor:
                 f"**Link:** {message_link}"
             )
             
-            # Get own user ID for Saved Messages
-            me = await self.client.get_me()
+            # Get notification target from config
+            notification_target = self.config.get('telegram', {}).get('notification_target', 'me')
             
             # Send notification with media if available
             try:
+                # First, try to validate the target
+                await self.validate_notification_target(notification_target)
+                
                 if has_media:
-                    # Forward the original message first (with media)
-                    await self.client.forward_messages('me', original_message)
-                    
-                    # Then send the notification text
-                    await self.client.send_message('me', notification)
-                    
-                    logging.info(f"✅ Notification with media sent for keywords: {keywords_str} in {chat_title}")
+                    # Only forward the original message (with media) - no separate text notification
+                    await self.client.forward_messages(notification_target, original_message)
+                    logging.info(f"✅ Media forwarded to {notification_target} for keywords: {keywords_str} in {chat_title}")
                 else:
-                    # Send text-only notification
-                    await self.client.send_message('me', notification)
-                    logging.info(f"✅ Text notification sent for keywords: {keywords_str} in {chat_title}")
+                    # Send text-only notification for messages without media
+                    await self.client.send_message(notification_target, notification)
+                    logging.info(f"✅ Text notification sent to {notification_target} for keywords: {keywords_str} in {chat_title}")
                     
             except Exception as e1:
-                logging.warning(f"Failed to send via 'me': {e1}")
+                logging.warning(f"Failed to send to {notification_target}: {e1}")
                 try:
-                    # Fallback: Send to own user ID
-                    if has_media:
-                        await self.client.forward_messages(me.id, original_message)
-                        await self.client.send_message(me.id, notification)
+                    # Fallback: Try to resolve target differently
+                    if notification_target != 'me':
+                        # If it's a channel/group, try with different formats
+                        fallback_targets = []
+                        
+                        if notification_target.lstrip('-').isdigit():
+                            # It's a chat ID, try as int
+                            fallback_targets.append(int(notification_target))
+                        elif notification_target.startswith('@'):
+                            # It's a username, try without @
+                            fallback_targets.append(notification_target)
+                            fallback_targets.append(notification_target[1:])  # Remove @
+                        else:
+                            # Try both with and without @
+                            fallback_targets.append(f"@{notification_target}")
+                            fallback_targets.append(notification_target)
+                        
+                        success = False
+                        for target in fallback_targets:
+                            try:
+                                if has_media:
+                                    await self.client.forward_messages(target, original_message)
+                                    logging.info(f"✅ Media forwarded to {target} for keywords: {keywords_str} in {chat_title}")
+                                else:
+                                    await self.client.send_message(target, notification)
+                                    logging.info(f"✅ Text notification sent to {target} for keywords: {keywords_str} in {chat_title}")
+                                success = True
+                                break
+                            except Exception as e_fallback:
+                                logging.debug(f"Fallback target {target} failed: {e_fallback}")
+                                continue
+                        
+                        if not success:
+                            raise Exception(f"All fallback targets failed for {notification_target}")
                     else:
-                        await self.client.send_message(me.id, notification)
-                    logging.info(f"✅ Notification sent via user ID for keywords: {keywords_str} in {chat_title}")
+                        # Fallback to user ID for 'me'
+                        me = await self.client.get_me()
+                        if has_media:
+                            await self.client.forward_messages(me.id, original_message)
+                            logging.info(f"✅ Media forwarded to user ID for keywords: {keywords_str} in {chat_title}")
+                        else:
+                            await self.client.send_message(me.id, notification)
+                            logging.info(f"✅ Text notification sent to user ID for keywords: {keywords_str} in {chat_title}")
+                        
                 except Exception as e2:
-                    logging.warning(f"Failed to send via user ID: {e2}")
+                    logging.warning(f"All fallback methods failed: {e2}")
                     try:
-                        # Final fallback: Send text-only to PeerUser
+                        # Final fallback: Send to self via PeerUser
+                        me = await self.client.get_me()
                         await self.client.send_message(PeerUser(me.id), notification)
-                        logging.info(f"✅ Text-only notification sent via PeerUser for keywords: {keywords_str} in {chat_title}")
+                        logging.info(f"✅ Final fallback text notification sent for keywords: {keywords_str} in {chat_title}")
                     except Exception as e3:
                         logging.error(f"❌ All notification methods failed: {e1}, {e2}, {e3}")
                         # Fallback: Log the notification
                         logging.info(f"NOTIFICATION: {notification}")
-                        raise e3
+                        # Don't raise, just continue - we logged the notification
+                        logging.error(f"Target {notification_target} is not accessible. Check permissions or use 'me' as target.")
             
         except Exception as e:
             logging.error(f"Error in send_notification: {e}")
             # Log the notification content for debugging
             logging.info(f"Failed notification content: Keywords: {keywords}, Group: {chat_title}, Sender: {sender_name}")
     
+    async def validate_notification_target(self, target: str):
+        """Validate if we can send messages to the target."""
+        try:
+            if target == 'me':
+                return True  # Always works
+            
+            # Try to get entity information
+            entity = await self.client.get_entity(target)
+            logging.debug(f"Target entity found: {entity}")
+            
+            # Check if we can send messages
+            if hasattr(entity, 'id'):
+                logging.debug(f"Target ID: {entity.id}, Type: {type(entity).__name__}")
+                
+                # For channels/groups, check if we're a member
+                if hasattr(entity, 'megagroup') or hasattr(entity, 'broadcast'):
+                    try:
+                        # Try to get our participant status
+                        me = await self.client.get_me()
+                        participant = await self.client.get_permissions(entity, me)
+                        logging.debug(f"Permissions in {target}: {participant}")
+                        
+                        if not participant.send_messages:
+                            logging.warning(f"No send permission in {target}")
+                            return False
+                    except Exception as perm_error:
+                        logging.warning(f"Could not check permissions for {target}: {perm_error}")
+                        return False
+            
+            return True
+            
+        except Exception as e:
+            logging.error(f"Failed to validate target {target}: {e}")
+            return False
+    
     def generate_message_hash(self, message_text: str, sender_id: int = None) -> str:
         """Generate a hash for message deduplication."""
         # Normalize message text for better duplicate detection
         normalized_text = re.sub(r'\s+', ' ', message_text.strip().lower())
+        
+        # If message is empty or very short, use a different approach
+        if len(normalized_text) < 3:
+            normalized_text = f"short_msg_{len(normalized_text)}_{normalized_text}"
         
         # Create hash from normalized text and optionally sender
         hash_input = normalized_text
         if self.include_sender_in_hash and sender_id:
             hash_input += f"_sender_{sender_id}"
         
-        return hashlib.md5(hash_input.encode('utf-8')).hexdigest()
+        hash_result = hashlib.md5(hash_input.encode('utf-8')).hexdigest()
+        
+        # Debug logging
+        logging.debug(f"Generated hash for message: '{normalized_text[:50]}...' -> {hash_result[:8]}...")
+        
+        return hash_result
     
     def is_duplicate_message(self, message_hash: str) -> bool:
         """Check if message is a duplicate and update tracking."""
@@ -343,13 +425,16 @@ class TelegramKeywordMonitor:
         if message_hash in self.message_hashes:
             hash_time = self.message_hashes[message_hash]
             if current_time - hash_time < timedelta(hours=self.hash_expiry_hours):
+                logging.debug(f"Duplicate detected: {message_hash[:8]}... (age: {current_time - hash_time})")
                 return True  # Duplicate found
             else:
                 # Hash expired, remove it
+                logging.debug(f"Hash expired, removing: {message_hash[:8]}...")
                 del self.message_hashes[message_hash]
         
         # Add new hash
         self.message_hashes[message_hash] = current_time
+        logging.debug(f"New message hash stored: {message_hash[:8]}... (total hashes: {len(self.message_hashes)})")
         return False  # Not a duplicate
     
     def cleanup_old_hashes(self):
@@ -382,9 +467,24 @@ class TelegramKeywordMonitor:
             # Get chat and sender info
             chat_id, chat_title = await self.get_chat_info(event)
             
-            # Check if this is a command in Saved Messages (self-chat)
+            # Check if this is a command in notification target or self-chat
             me = await self.client.get_me()
-            if chat_id == me.id:
+            notification_target = self.config.get('telegram', {}).get('notification_target', 'me')
+            
+            # Handle commands in self-chat or notification target
+            is_command_chat = False
+            if chat_id == me.id:  # Self-chat (Saved Messages)
+                is_command_chat = True
+            elif notification_target != 'me':
+                # Check if this is the notification target chat
+                try:
+                    target_entity = await self.client.get_entity(notification_target)
+                    if hasattr(target_entity, 'id') and target_entity.id == chat_id:
+                        is_command_chat = True
+                except Exception:
+                    pass
+            
+            if is_command_chat:
                 await self.handle_command(event, message_text)
                 return
             
@@ -403,8 +503,10 @@ class TelegramKeywordMonitor:
                 message_hash = self.generate_message_hash(message_text, sender_id)
                 
                 if self.is_duplicate_message(message_hash):
-                    logging.info(f"Duplicate message detected in {chat_title}, skipping notification")
+                    logging.info(f"🔄 Duplicate message detected in {chat_title} from {sender_id}, skipping notification (hash: {message_hash[:8]}...)")
                     return
+                else:
+                    logging.debug(f"✅ New unique message in {chat_title} (hash: {message_hash[:8]}...)")
             
             # Get sender info
             sender_name = await self.get_sender_info(event)
@@ -424,7 +526,7 @@ class TelegramKeywordMonitor:
             logging.error(f"Error in message handler: {e}")
     
     async def handle_command(self, event, message_text: str):
-        """Handle commands sent to Saved Messages."""
+        """Handle commands sent to notification target."""
         try:
             if not message_text.startswith('/'):
                 return
@@ -437,14 +539,30 @@ class TelegramKeywordMonitor:
             # Reload config after potential changes
             self.config = self.load_config()
             
-            # Send response
-            await self.client.send_message('me', response)
+            # Send response to notification target if it's a test, otherwise to command chat
+            notification_target = self.config.get('telegram', {}).get('notification_target', 'me')
+            
+            # Special handling for /target test - send to the configured target
+            if message_text.strip().lower().startswith('/target test'):
+                try:
+                    await self.client.send_message(notification_target, response)
+                    # Also send confirmation to command chat
+                    await self.client.send_message(event.chat_id, f"✅ Test-Nachricht an `{notification_target}` gesendet!")
+                except Exception as e:
+                    await self.client.send_message(event.chat_id, f"❌ Fehler beim Senden an `{notification_target}`: {str(e)}")
+            else:
+                # Regular command response to command chat
+                await self.client.send_message(event.chat_id, response)
             
             logging.info(f"Command processed successfully")
             
         except Exception as e:
             logging.error(f"Error handling command: {e}")
-            await self.client.send_message('me', f"❌ Fehler beim Verarbeiten des Befehls: {str(e)}")
+            try:
+                await self.client.send_message(event.chat_id, f"❌ Fehler beim Verarbeiten des Befehls: {str(e)}")
+            except:
+                # Fallback to 'me' if even error message fails
+                await self.client.send_message('me', f"❌ Fehler beim Verarbeiten des Befehls: {str(e)}")
     
     async def run(self):
         """Run the keyword monitor."""

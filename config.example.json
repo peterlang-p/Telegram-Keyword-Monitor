@@ -2,7 +2,8 @@
   "telegram": {
     "api_id": "YOUR_API_ID",
     "api_hash": "YOUR_API_HASH",
-    "session_name": "/app/data/telegram_monitor"
+    "session_name": "/app/data/telegram_monitor",
+    "notification_target": "me"
   },
   "keywords": [
     "python",
@@ -15,7 +16,8 @@
     "case_sensitive": false,
     "send_full_message": true,
     "max_message_length": 500,
-    "forward_media": true
+    "forward_media": true,
+    "media_only_forward": true
   },
   "groups": {
     "whitelist": [],

@@ -28,6 +28,9 @@ An intelligent Python tool that monitors all your Telegram groups in real-time a
 - ✅ **Configurable message formatting** and length limits
 - ✅ **Real-time configuration** updates without restart
 - ✅ **Duplicate detection** prevents spam from cross-posted messages
+- ✅ **Media forwarding** with photos, videos, documents, and other attachments
+- ✅ **Custom notification targets** - use channels, groups, or Saved Messages
+- ✅ **Debug tools** for troubleshooting and optimization
 
 ## 🚀 Quick Start
 
@@ -48,6 +51,13 @@ An intelligent Python tool that monitors all your Telegram groups in real-time a
    - Guide you through API credential setup
    - Create Telegram session interactively
    - Start the Docker container
+
+   **Alternative setup scripts:**
+   ```bash
+   python3 setup_session.py              # Session setup only
+   python3 create_notification_channel.py # Create private channel
+   python3 fix_notification_target.py     # Fix notification issues
+   ```
 
 3. **Regular usage:**
    ```bash
@@ -248,6 +258,17 @@ You can manage keywords and settings directly via Telegram without editing confi
 | `/duplicates` | Show duplicate detection settings | `/duplicates` |
 | `/duplicates on/off` | Enable/disable duplicate detection | `/duplicates off` |
 | `/duplicates hours <number>` | Set hash expiry time | `/duplicates hours 12` |
+| `/duplicates debug status` | Show debug information | `/duplicates debug status` |
+
+### 📬 Notification Target
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/target` | Show current notification target | `/target` |
+| `/target set me` | Use Saved Messages | `/target set me` |
+| `/target set @channel` | Use specific channel | `/target set @my_alerts` |
+| `/target test` | Send test notification | `/target test` |
+| `/target check <target>` | Check target permissions | `/target check -1001234567890` |
 
 ### ℹ️ Status & Help
 
@@ -280,6 +301,21 @@ You can manage keywords and settings directly via Telegram without editing confi
 /blacklist add Spam Group
 /whitelist list
 /status
+```
+
+**Notification targets:**
+```
+/target set me                    # Use Saved Messages
+/target set @my_alerts           # Use private channel
+/target set -1001234567890       # Use specific chat ID
+/target test                     # Test current target
+```
+
+**Debug and troubleshooting:**
+```
+/duplicates debug status         # Show duplicate detection info
+/target check @my_channel       # Check channel permissions
+/status                         # Overall system status
 ```
 
 ### 💡 Benefits of Telegram Control
@@ -372,6 +408,12 @@ You can manage keywords and settings directly via Telegram without editing confi
    - View logs: `docker-compose logs telegram-monitor`
    - Restart: `docker-compose restart telegram-monitor`
 
+7. **Notification target issues**
+   - Channel not receiving messages: Use `/target check <target>`
+   - Permission denied errors: Run `python3 fix_notification_target.py`
+   - Create new private channel: Run `python3 create_notification_channel.py`
+   - Fallback to Saved Messages: `/target set me`
+
 ### Checking Logs:
 ```bash
 # Local installation
@@ -412,6 +454,10 @@ Telegram-Keyword-Monitor/
 ├── docker-compose.yml     # Docker service configuration
 ├── start.sh               # Start script
 ├── stop.sh                # Stop script
+├── setup_session.py       # Interactive session setup
+├── create_notification_channel.py  # Create private channel
+├── fix_notification_target.py      # Fix notification issues
+├── first_time_setup.sh    # Complete guided setup
 ├── README.md              # This file
 ├── LICENSE                # MIT license
 ├── CONTRIBUTING.md         # Contribution guidelines
