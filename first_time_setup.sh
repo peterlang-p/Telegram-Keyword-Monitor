@@ -40,14 +40,58 @@ echo "📦 Installing dependencies..."
 echo "This may take a moment..."
 echo ""
 
-# Install dependencies
+# Check for pip and try to install if missing
 if command -v pip3 &> /dev/null; then
+    echo "✅ Found pip3"
     pip3 install -r requirements.txt
 elif command -v pip &> /dev/null; then
+    echo "✅ Found pip"
     pip install -r requirements.txt
 else
-    echo "❌ pip not found! Please install Python pip first."
-    exit 1
+    echo "⚠️  pip not found! Attempting to install pip..."
+    
+    # Try different methods to install pip
+    if command -v apt-get &> /dev/null; then
+        echo "📦 Installing pip via apt-get..."
+        sudo apt-get update && sudo apt-get install -y python3-pip
+    elif command -v yum &> /dev/null; then
+        echo "📦 Installing pip via yum..."
+        sudo yum install -y python3-pip
+    elif command -v dnf &> /dev/null; then
+        echo "📦 Installing pip via dnf..."
+        sudo dnf install -y python3-pip
+    elif command -v brew &> /dev/null; then
+        echo "📦 Installing pip via brew..."
+        brew install python3
+    elif command -v pacman &> /dev/null; then
+        echo "📦 Installing pip via pacman..."
+        sudo pacman -S python-pip
+    else
+        echo "❌ Could not install pip automatically!"
+        echo ""
+        echo "🔧 Manual installation required:"
+        echo "   Ubuntu/Debian: sudo apt-get install python3-pip"
+        echo "   CentOS/RHEL:   sudo yum install python3-pip"
+        echo "   Fedora:        sudo dnf install python3-pip"
+        echo "   macOS:         brew install python3"
+        echo "   Arch Linux:    sudo pacman -S python-pip"
+        echo ""
+        echo "After installing pip, run this script again."
+        exit 1
+    fi
+    
+    # Check if pip installation was successful
+    if command -v pip3 &> /dev/null; then
+        echo "✅ pip3 installed successfully!"
+        pip3 install -r requirements.txt
+    elif command -v pip &> /dev/null; then
+        echo "✅ pip installed successfully!"
+        pip install -r requirements.txt
+    else
+        echo "❌ pip installation failed!"
+        echo "Please install pip manually and run this script again."
+        exit 1
+    fi
 fi
 
 if [ $? -ne 0 ]; then

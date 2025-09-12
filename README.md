@@ -53,6 +53,12 @@ An intelligent Python tool that monitors all your Telegram groups in real-time a
    - Create Telegram session interactively
    - Start the Docker container
 
+   **If pip installation fails:**
+   ```bash
+   ./install_dependencies.sh              # Install pip and dependencies
+   ./first_time_setup.sh                  # Then run setup
+   ```
+
    **Manual setup (if needed):**
    ```bash
    pip3 install -r requirements.txt       # Install dependencies
