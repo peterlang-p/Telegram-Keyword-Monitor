@@ -55,7 +55,6 @@ An intelligent Python tool that monitors all your Telegram groups in real-time a
    **Alternative setup scripts:**
    ```bash
    python3 setup_session.py              # Session setup only
-   python3 create_notification_channel.py # Create private channel
    python3 fix_notification_target.py     # Fix notification issues
    ```
 
@@ -204,14 +203,19 @@ Open your **"Saved Messages"** in Telegram and use these commands:
 
 ## 📬 Notifications
 
-When a keyword is found, you'll receive a message in your "Saved Messages" with:
+When a keyword is found, you'll receive a notification in your configured target with:
 
-- Found keywords
-- Group name
-- Sender information
-- Timestamp
-- Message text (full or truncated)
-- Deep link to original message
+- **Media forwarding**: Photos, videos, documents are forwarded directly
+- **Text notifications**: Include found keywords, group name, sender, timestamp
+- **Deep links**: Direct links to original messages
+- **Smart formatting**: Configurable message length and format
+
+### Notification Targets
+
+- **Saved Messages** (`me`): Default, always works
+- **Public Channels** (`@channel_name`): Use channel username
+- **Private Channels** (`https://t.me/+xxxxx`): Use invite link (auto-join)
+- **Chat ID** (`-1001234567890`): Direct chat/channel ID
 
 **Example notification:**
 ```
@@ -266,9 +270,11 @@ You can manage keywords and settings directly via Telegram without editing confi
 |---------|-------------|---------|
 | `/target` | Show current notification target | `/target` |
 | `/target set me` | Use Saved Messages | `/target set me` |
-| `/target set @channel` | Use specific channel | `/target set @my_alerts` |
+| `/target set @channel` | Use public channel | `/target set @my_alerts` |
+| `/target set -1001234567890` | Use chat ID | `/target set -1001234567890` |
+| `/target set https://t.me/+xxxxx` | Use private channel (invite link) | `/target set https://t.me/+abc123` |
 | `/target test` | Send test notification | `/target test` |
-| `/target check <target>` | Check target permissions | `/target check -1001234567890` |
+| `/target check <target>` | Check target permissions | `/target check @my_channel` |
 
 ### ℹ️ Status & Help
 
@@ -305,10 +311,11 @@ You can manage keywords and settings directly via Telegram without editing confi
 
 **Notification targets:**
 ```
-/target set me                    # Use Saved Messages
-/target set @my_alerts           # Use private channel
-/target set -1001234567890       # Use specific chat ID
-/target test                     # Test current target
+/target set me                           # Use Saved Messages
+/target set @my_alerts                   # Use public channel
+/target set -1001234567890               # Use chat ID
+/target set https://t.me/+abc123         # Use private channel (invite link)
+/target test                             # Test current target
 ```
 
 **Debug and troubleshooting:**
@@ -411,7 +418,7 @@ You can manage keywords and settings directly via Telegram without editing confi
 7. **Notification target issues**
    - Channel not receiving messages: Use `/target check <target>`
    - Permission denied errors: Run `python3 fix_notification_target.py`
-   - Create new private channel: Run `python3 create_notification_channel.py`
+   - Private channel access: Use invite link with `/target set https://t.me/+xxxxx`
    - Fallback to Saved Messages: `/target set me`
 
 ### Checking Logs:
@@ -455,7 +462,6 @@ Telegram-Keyword-Monitor/
 ├── start.sh               # Start script
 ├── stop.sh                # Stop script
 ├── setup_session.py       # Interactive session setup
-├── create_notification_channel.py  # Create private channel
 ├── fix_notification_target.py      # Fix notification issues
 ├── first_time_setup.sh    # Complete guided setup
 ├── README.md              # This file

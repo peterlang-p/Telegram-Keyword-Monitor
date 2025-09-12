@@ -473,8 +473,9 @@ class KeywordManager:
             response += f"**Aktuelles Ziel:** `{current_target}`\n\n"
             response += "**Verfügbare Befehle:**\n"
             response += "• `/target set me` - Saved Messages verwenden\n"
-            response += "• `/target set @channel_name` - Kanal verwenden\n"
+            response += "• `/target set @channel_name` - Öffentlichen Kanal verwenden\n"
             response += "• `/target set -1001234567890` - Chat-ID verwenden\n"
+            response += "• `/target set https://t.me/+xxxxx` - Privaten Kanal per Invite-Link\n"
             response += "• `/target test` - Test-Nachricht senden\n"
             response += "• `/target check <ziel>` - Ziel-Berechtigung prüfen\n\n"
             response += "**Hinweise:**\n"
@@ -498,17 +499,27 @@ class KeywordManager:
             new_target = args[1]
             
             # Validate target format
-            if new_target not in ['me'] and not (new_target.startswith('@') or new_target.lstrip('-').isdigit()):
-                return "❌ Ungültiges Ziel-Format.\n\nVerwenden Sie: 'me', '@channel_name' oder '-1001234567890'"
+            is_invite_link = new_target.startswith('https://t.me/+') or new_target.startswith('t.me/+') or new_target.startswith('+')
+            is_valid = (new_target == 'me' or 
+                       new_target.startswith('@') or 
+                       new_target.lstrip('-').isdigit() or 
+                       is_invite_link)
+            
+            if not is_valid:
+                return "❌ Ungültiges Ziel-Format.\n\nVerwenden Sie:\n- 'me'\n- '@channel_name'\n- '-1001234567890'\n- 'https://t.me/+xxxxx'"
             
             config = self.load_config()
             if 'telegram' not in config:
                 config['telegram'] = {}
             
-            config['telegram']['notification_target'] = new_target
-            self.save_config(config)
-            
-            return f"✅ Benachrichtigungs-Ziel auf `{new_target}` gesetzt.\n\nVerwenden Sie `/target test` um es zu testen."
+            # Handle invite links specially
+            if is_invite_link:
+                return await self.handle_invite_link(new_target, config)
+            else:
+                config['telegram']['notification_target'] = new_target
+                self.save_config(config)
+                
+                return f"✅ Benachrichtigungs-Ziel auf `{new_target}` gesetzt.\n\nVerwenden Sie `/target test` um es zu testen."
         
         elif action == 'test':
             config = self.load_config()
@@ -545,6 +556,40 @@ class KeywordManager:
         
         else:
             return f"❌ Unbekannte Aktion: {action}\n\nVerfügbare Aktionen: set, test, check"
+    
+    async def handle_invite_link(self, invite_link: str, config: Dict) -> str:
+        """Handle setting notification target via invite link."""
+        try:
+            # Clean up the invite link
+            if invite_link.startswith('https://t.me/+'):
+                invite_hash = invite_link.replace('https://t.me/+', '')
+            elif invite_link.startswith('t.me/+'):
+                invite_hash = invite_link.replace('t.me/+', '')
+            elif invite_link.startswith('+'):
+                invite_hash = invite_link[1:]
+            else:
+                invite_hash = invite_link
+            
+            # Store the invite link processing info
+            config['telegram']['notification_target'] = invite_link
+            config['telegram']['invite_hash'] = invite_hash
+            config['telegram']['needs_join'] = True
+            
+            self.save_config(config)
+            
+            response = f"✅ **Invite-Link gespeichert!**\n\n"
+            response += f"**Link:** `{invite_link}`\n"
+            response += f"**Hash:** `{invite_hash}`\n\n"
+            response += "🔄 **Nächste Schritte:**\n"
+            response += "1. Der Monitor wird automatisch dem Kanal beitreten\n"
+            response += "2. Verwenden Sie `/target test` zum Testen\n"
+            response += "3. Bei Problemen wird automatisch zu 'me' gewechselt\n\n"
+            response += "💡 **Hinweis:** Der private Kanal wird beim nächsten Start automatisch verbunden."
+            
+            return response
+            
+        except Exception as e:
+            return f"❌ Fehler beim Verarbeiten des Invite-Links: {str(e)}"
     
     def show_help(self) -> str:
         """Show help message."""

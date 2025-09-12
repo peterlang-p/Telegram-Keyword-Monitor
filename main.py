@@ -15,6 +15,7 @@ from typing import List, Dict
 
 from telethon import TelegramClient, events
 from telethon.tl.types import MessageService, PeerUser
+from telethon.tl.functions.messages import ImportChatInviteRequest
 
 from keyword_manager import KeywordManager
 
@@ -218,6 +219,8 @@ class TelegramKeywordMonitor:
                               chat_id: int, message_id: int, original_message=None):
         """Send notification to Saved Messages with media support."""
         try:
+            # Check if we need to join a private channel first
+            await self.ensure_channel_access()
             # Create message link
             if chat_id < 0:  # Group/Channel
                 if str(chat_id).startswith('-100'):
@@ -384,13 +387,81 @@ class TelegramKeywordMonitor:
                             return False
                     except Exception as perm_error:
                         logging.warning(f"Could not check permissions for {target}: {perm_error}")
-                        return False
+                        # For private channels, we might not be able to check permissions
+                        # but still be able to send messages if we're a member
+                        logging.info(f"Assuming access to private channel {target}")
+                        return True
             
             return True
             
         except Exception as e:
             logging.error(f"Failed to validate target {target}: {e}")
-            return False
+            # If we can't validate, we'll try anyway and handle the error in send_notification
+            return True
+    
+    async def ensure_channel_access(self):
+        """Ensure we have access to the notification target, join if needed."""
+        try:
+            telegram_config = self.config.get('telegram', {})
+            notification_target = telegram_config.get('notification_target', 'me')
+            needs_join = telegram_config.get('needs_join', False)
+            invite_hash = telegram_config.get('invite_hash')
+            
+            if needs_join and invite_hash and notification_target != 'me':
+                logging.info(f"Attempting to join private channel via invite link...")
+                
+                try:
+                    # Try to join the channel
+                    result = await self.client(ImportChatInviteRequest(invite_hash))
+                    
+                    if result.chats:
+                        channel = result.chats[0]
+                        channel_id = f"-100{channel.id}"
+                        
+                        # Update config with the actual channel ID
+                        self.config['telegram']['notification_target'] = channel_id
+                        self.config['telegram']['needs_join'] = False
+                        
+                        # Save updated config
+                        with open(self.config_path, 'w', encoding='utf-8') as f:
+                            json.dump(self.config, f, indent=2, ensure_ascii=False)
+                        
+                        logging.info(f"✅ Successfully joined private channel: {channel.title} ({channel_id})")
+                        
+                        # Send welcome message
+                        welcome_msg = (
+                            f"🎉 **Private Channel Connected!**\n\n"
+                            f"Keyword Monitor ist jetzt mit diesem privaten Kanal verbunden.\n\n"
+                            f"**Kanal:** {channel.title}\n"
+                            f"**ID:** `{channel_id}`\n"
+                            f"**Status:** Privat ✅"
+                        )
+                        await self.client.send_message(channel, welcome_msg)
+                        
+                except Exception as join_error:
+                    logging.error(f"Failed to join private channel: {join_error}")
+                    
+                    # Fallback to 'me'
+                    self.config['telegram']['notification_target'] = 'me'
+                    self.config['telegram']['needs_join'] = False
+                    
+                    with open(self.config_path, 'w', encoding='utf-8') as f:
+                        json.dump(self.config, f, indent=2, ensure_ascii=False)
+                    
+                    logging.warning("Falling back to 'me' as notification target")
+                    
+                    # Notify user about fallback
+                    fallback_msg = (
+                        f"⚠️ **Fallback zu Saved Messages**\n\n"
+                        f"Konnte nicht dem privaten Kanal beitreten.\n"
+                        f"Benachrichtigungen gehen jetzt an Ihre Saved Messages.\n\n"
+                        f"**Fehler:** {str(join_error)[:100]}...\n\n"
+                        f"💡 Verwenden Sie `/target set me` um dies zu bestätigen."
+                    )
+                    await self.client.send_message('me', fallback_msg)
+                    
+        except Exception as e:
+            logging.error(f"Error in ensure_channel_access: {e}")
     
     def generate_message_hash(self, message_text: str, sender_id: int = None) -> str:
         """Generate a hash for message deduplication."""
