@@ -335,14 +335,14 @@ You can manage keywords and settings directly via Telegram without editing confi
 
 ## 🔄 Production Deployment
 
-### Mit systemd (Linux):
+### Using systemd (Linux):
 
-1. **Service-Datei erstellen:**
+1. **Create service file:**
    ```bash
    sudo nano /etc/systemd/system/telegram-monitor.service
    ```
 
-2. **Service-Konfiguration:**
+2. **Service configuration:**
    ```ini
    [Unit]
    Description=Telegram Keyword Monitor
@@ -360,15 +360,15 @@ You can manage keywords and settings directly via Telegram without editing confi
    WantedBy=multi-user.target
    ```
 
-3. **Service aktivieren:**
+3. **Activate service:**
    ```bash
    sudo systemctl enable telegram-monitor.service
    sudo systemctl start telegram-monitor.service
    ```
 
-### Mit Docker:
+### Using Docker:
 
-1. **Dockerfile erstellen:**
+1. **Create Dockerfile:**
    ```dockerfile
    FROM python:3.11-slim
    WORKDIR /app
@@ -378,7 +378,7 @@ You can manage keywords and settings directly via Telegram without editing confi
    CMD ["python", "main.py"]
    ```
 
-2. **Image bauen und starten:**
+2. **Build image and run:**
    ```bash
    docker build -t telegram-monitor .
    docker run -d --name telegram-monitor -v $(pwd)/config.json:/app/config.json telegram-monitor
@@ -433,19 +433,19 @@ docker-compose logs -f telegram-monitor
 ## 🐳 Docker Commands
 
 ```bash
-# Starten
+# Start
 ./start.sh
 
-# Stoppen  
+# Stop  
 ./stop.sh
 
-# Logs anzeigen
+# Show logs
 docker-compose logs -f telegram-monitor
 
-# Status prüfen
+# Check status
 docker-compose ps
 
-# Neustart
+# Restart
 docker-compose restart telegram-monitor
 ```
 
@@ -497,9 +497,3 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 ## ⚠️ Disclaimer
 
 This tool is intended for personal use. Please comply with Telegram's Terms of Service and use responsibly. The authors are not responsible for any misuse of this software.
-
-## 🌟 Star History
-
-If you find this project useful, please consider giving it a star on GitHub!
-
-[![Star History Chart](https://api.star-history.com/svg?repos=peterlang-p/Telegram-Keyword-Monitor&type=Date)](https://star-history.com/#peterlang-p/Telegram-Keyword-Monitor&Date)
