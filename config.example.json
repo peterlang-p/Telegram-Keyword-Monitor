@@ -1,0 +1,33 @@
+{
+  "telegram": {
+    "api_id": "YOUR_API_ID",
+    "api_hash": "YOUR_API_HASH",
+    "session_name": "/app/data/telegram_monitor"
+  },
+  "keywords": [
+    "python",
+    "telegram",
+    "bot",
+    "(?i)machine learning",
+    "(?i)AI|artificial intelligence"
+  ],
+  "settings": {
+    "case_sensitive": false,
+    "send_full_message": true,
+    "max_message_length": 500
+  },
+  "groups": {
+    "whitelist": [],
+    "blacklist": []
+  },
+  "logging": {
+    "enabled": true,
+    "log_file": "/app/logs/keyword_monitor.log",
+    "log_level": "INFO"
+  },
+  "duplicate_detection": {
+    "enabled": true,
+    "expiry_hours": 24,
+    "include_sender": true
+  }
+}

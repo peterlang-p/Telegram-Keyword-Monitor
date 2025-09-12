@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  telegram-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telegram-keyword-monitor
+    restart: unless-stopped
+    
+    # Mount volumes for persistent data
+    volumes:
+      - ./data:/app/data
+      - ./config.json:/app/config.json:ro
+      - ./logs:/app/logs
+    
+    # Environment variables (optional)
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Europe/Berlin
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('/app/data/telegram_monitor.session') else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
