@@ -20,8 +20,8 @@ COPY main.py .
 COPY keyword_manager.py .
 COPY config.json .
 
-# Create directory for session files and logs
-RUN mkdir -p /app/data
+# Create directories for session files and logs
+RUN mkdir -p /app/data /app/logs
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1

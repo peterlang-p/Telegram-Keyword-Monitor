@@ -71,13 +71,29 @@ class TelegramKeywordMonitor:
         log_level = getattr(logging, log_config.get('log_level', 'INFO'))
         log_file = log_config.get('log_file', 'keyword_monitor.log')
         
+        # Ensure log directory exists and is writable
+        import os
+        log_dir = os.path.dirname(log_file) if os.path.dirname(log_file) else '.'
+        
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+        except PermissionError:
+            # Fallback to current directory if can't create log directory
+            log_file = 'keyword_monitor.log'
+            log_dir = '.'
+        
+        handlers = [logging.StreamHandler(sys.stdout)]
+        
+        # Try to add file handler, fallback to console only if it fails
+        try:
+            handlers.append(logging.FileHandler(log_file, encoding='utf-8'))
+        except PermissionError:
+            logging.warning(f"Cannot write to log file {log_file}, using console logging only")
+        
         logging.basicConfig(
             level=log_level,
             format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_file, encoding='utf-8'),
-                logging.StreamHandler(sys.stdout)
-            ]
+            handlers=handlers
         )
         
         logging.info("Telegram Keyword Monitor started")
