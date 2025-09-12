@@ -47,13 +47,15 @@ An intelligent Python tool that monitors all your Telegram groups in real-time a
    ./first_time_setup.sh
    ```
    This will:
+   - Install Python dependencies automatically
    - Create config.json from template
    - Guide you through API credential setup
    - Create Telegram session interactively
    - Start the Docker container
 
-   **Alternative setup scripts:**
+   **Manual setup (if needed):**
    ```bash
+   pip3 install -r requirements.txt       # Install dependencies
    python3 setup_session.py              # Session setup only
    python3 fix_notification_target.py     # Fix notification issues
    ```
@@ -72,21 +74,43 @@ An intelligent Python tool that monitors all your Telegram groups in real-time a
    cd Telegram-Keyword-Monitor
    ```
 
-2. **Create virtual environment:**
+2. **Install dependencies:**
    ```bash
-   python3 -m venv telegram_monitor_env
-   source telegram_monitor_env/bin/activate
-   pip install -r requirements.txt
+   pip3 install -r requirements.txt
    ```
 
 3. **Setup configuration:**
    ```bash
    cp config.example.json config.json
-   # Edit config.json with your credentials
+   # Edit config.json with your API credentials from https://my.telegram.org
    ```
 
-4. **Run the monitor:**
+4. **Create session:**
    ```bash
+   python3 setup_session.py
+   ```
+
+5. **Run the monitor:**
+   ```bash
+   python3 main.py
+   ```
+
+### Option 3: Virtual Environment (Advanced)
+
+1. **Clone and setup:**
+   ```bash
+   git clone https://github.com/peterlang-p/Telegram-Keyword-Monitor.git
+   cd Telegram-Keyword-Monitor
+   python3 -m venv telegram_monitor_env
+   source telegram_monitor_env/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. **Configure and run:**
+   ```bash
+   cp config.example.json config.json
+   # Edit config.json with your credentials
+   python3 setup_session.py
    python3 main.py
    ```
 

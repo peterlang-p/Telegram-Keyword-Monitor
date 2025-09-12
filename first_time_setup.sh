@@ -36,6 +36,29 @@ if grep -q "YOUR_API_ID" config.json; then
     exit 1
 fi
 
+echo "📦 Installing dependencies..."
+echo "This may take a moment..."
+echo ""
+
+# Install dependencies
+if command -v pip3 &> /dev/null; then
+    pip3 install -r requirements.txt
+elif command -v pip &> /dev/null; then
+    pip install -r requirements.txt
+else
+    echo "❌ pip not found! Please install Python pip first."
+    exit 1
+fi
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to install dependencies!"
+    echo "Please run manually: pip3 install -r requirements.txt"
+    exit 1
+fi
+
+echo "✅ Dependencies installed successfully!"
+echo ""
+
 echo "📱 Setting up Telegram session..."
 echo "You will be prompted for your phone number and verification code."
 echo ""
