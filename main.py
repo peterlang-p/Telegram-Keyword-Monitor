@@ -115,15 +115,120 @@ class TelegramKeywordMonitor:
             logging.error(f"Invalid Telegram configuration: {e}")
             sys.exit(1)
         
-        self.client = TelegramClient(session_name, api_id, api_hash)
+        # Check session file permissions and location
+        import os
+        import stat
+        
+        # Determine session file paths
+        session_file = f"{session_name}.session"
+        data_session_file = f"data/{session_name}.session"
+        
+        logging.info(f"Session configuration: name='{session_name}'")
+        logging.info(f"Current working directory: {os.getcwd()}")
+        logging.info(f"Expected session file: {session_file}")
+        logging.info(f"Data directory session file: {data_session_file}")
+        
+        # Check if session files exist and their permissions
+        for path in [session_file, data_session_file]:
+            if os.path.exists(path):
+                file_stat = os.stat(path)
+                file_mode = stat.filemode(file_stat.st_mode)
+                file_size = file_stat.st_size
+                logging.info(f"Session file found: {path}")
+                logging.info(f"  - Size: {file_size} bytes")
+                logging.info(f"  - Permissions: {file_mode} (octal: {oct(file_stat.st_mode)[-3:]})")
+                logging.info(f"  - Owner UID: {file_stat.st_uid}")
+                logging.info(f"  - Group GID: {file_stat.st_gid}")
+                logging.info(f"  - Is writable: {os.access(path, os.W_OK)}")
+                logging.info(f"  - Is readable: {os.access(path, os.R_OK)}")
+            else:
+                logging.info(f"Session file not found: {path}")
+        
+        # Check data directory permissions
+        data_dir = "data"
+        if os.path.exists(data_dir):
+            dir_stat = os.stat(data_dir)
+            dir_mode = stat.filemode(dir_stat.st_mode)
+            logging.info(f"Data directory: {data_dir}")
+            logging.info(f"  - Permissions: {dir_mode} (octal: {oct(dir_stat.st_mode)[-3:]})")
+            logging.info(f"  - Owner UID: {dir_stat.st_uid}")
+            logging.info(f"  - Group GID: {dir_stat.st_gid}")
+            logging.info(f"  - Is writable: {os.access(data_dir, os.W_OK)}")
+            logging.info(f"  - Can create files: {os.access(data_dir, os.W_OK | os.X_OK)}")
+        else:
+            logging.warning(f"Data directory does not exist: {data_dir}")
+        
+        # Check current process user
+        try:
+            import pwd
+            current_uid = os.getuid()
+            current_gid = os.getgid()
+            user_info = pwd.getpwuid(current_uid)
+            logging.info(f"Process running as: UID={current_uid}, GID={current_gid}, User={user_info.pw_name}")
+        except (ImportError, AttributeError):
+            # Windows doesn't have pwd module
+            logging.info(f"Process running as: UID={os.getuid() if hasattr(os, 'getuid') else 'N/A'}")
+        
+        # Try to create the client with detailed session path
+        session_path = f"data/{session_name}" if os.path.exists("data") else session_name
+        logging.info(f"Creating TelegramClient with session path: {session_path}")
+        
+        self.client = TelegramClient(session_path, api_id, api_hash)
         
         try:
+            logging.info("Attempting to start Telegram client...")
             await self.client.start()
             me = await self.client.get_me()
             logging.info(f"Successfully logged in as {me.first_name} (@{me.username})")
             
+            # Check session file after successful connection
+            final_session_file = f"{session_path}.session"
+            if os.path.exists(final_session_file):
+                file_stat = os.stat(final_session_file)
+                logging.info(f"Final session file: {final_session_file}")
+                logging.info(f"  - Size after connection: {file_stat.st_size} bytes")
+                logging.info(f"  - Last modified: {datetime.fromtimestamp(file_stat.st_mtime)}")
+            
         except Exception as e:
             logging.error(f"Failed to connect to Telegram: {e}")
+            logging.error(f"Error type: {type(e).__name__}")
+            
+            # Additional debugging for database errors
+            if "readonly database" in str(e).lower():
+                logging.error("READONLY DATABASE ERROR DETECTED!")
+                logging.error("This usually means:")
+                logging.error("1. Session file permissions are incorrect")
+                logging.error("2. Data directory is not writable")
+                logging.error("3. Docker volume mounting issues")
+                logging.error("4. File system is mounted read-only")
+                
+                # Try to identify the exact session file causing issues
+                possible_files = [
+                    f"{session_name}.session",
+                    f"data/{session_name}.session",
+                    f"{session_path}.session"
+                ]
+                
+                for file_path in possible_files:
+                    if os.path.exists(file_path):
+                        try:
+                            # Try to open the file for writing
+                            with open(file_path, 'a') as f:
+                                f.flush()
+                            logging.info(f"✅ Can write to: {file_path}")
+                        except Exception as write_error:
+                            logging.error(f"❌ Cannot write to: {file_path} - {write_error}")
+                
+                # Check if we can create new files in the data directory
+                try:
+                    test_file = "data/test_write.tmp"
+                    with open(test_file, 'w') as f:
+                        f.write("test")
+                    os.remove(test_file)
+                    logging.info("✅ Can create new files in data directory")
+                except Exception as write_test_error:
+                    logging.error(f"❌ Cannot create files in data directory: {write_test_error}")
+            
             sys.exit(1)
     
     def check_group_filters(self, chat_id: int, chat_title: str) -> bool:
