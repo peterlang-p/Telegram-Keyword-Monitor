@@ -27,11 +27,6 @@ RUN mkdir -p /app/data /app/logs
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
-# Create non-root user for security
-RUN useradd -m -u 1000 telegram && \
-    chown -R telegram:telegram /app
-USER telegram
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import os; exit(0 if os.path.exists('/app/data/telegram_monitor.session') else 1)"

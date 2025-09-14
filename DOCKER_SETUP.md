@@ -167,9 +167,10 @@ docker-compose restart telegram-monitor
 
 ### Berechtigungsprobleme
 ```bash
-# Verzeichnis-Berechtigungen korrigieren
-sudo chown -R $USER:$USER data/ logs/
-chmod 755 data/ logs/
+# Sollten normalerweise nicht auftreten - Docker verwendet automatisch Ihre User-ID
+# Bei Problemen: Container neu bauen
+docker-compose down
+docker-compose up -d --build
 ```
 
 ### Netzwerk-Probleme

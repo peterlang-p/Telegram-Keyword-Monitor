@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   telegram-monitor:
     build:
@@ -7,13 +5,15 @@ services:
       dockerfile: Dockerfile
     container_name: telegram-keyword-monitor
     restart: unless-stopped
-    user: "1000:1000"
     
     # Mount volumes for persistent data
     volumes:
       - ./data:/app/data:rw
       - ./config.json:/app/config.json:rw
       - ./logs:/app/logs:rw
+    
+    # Use host user ID to avoid permission issues
+    user: "${UID:-1000}:${GID:-1000}"
     
     # Environment variables (optional)
     environment:
