@@ -401,19 +401,49 @@ class TelegramKeywordMonitor:
             # Get notification target from config
             notification_target = self.config.get('telegram', {}).get('notification_target', 'me')
             
+            # For reliable notifications, check if we should also send to saved messages
+            notification_mode = self.config.get('settings', {}).get('notification_mode', 'channel_only')
+            send_to_saved_messages = notification_mode in ['both', 'saved_messages_only']
+            
             # Send notification with media if available
             try:
                 # First, try to validate the target
                 await self.validate_notification_target(notification_target)
                 
-                if has_media:
-                    # Only forward the original message (with media) - no separate text notification
-                    await self.client.forward_messages(notification_target, original_message)
-                    logging.info(f"✅ Media forwarded to {notification_target} for keywords: {keywords_str} in {chat_title}")
-                else:
-                    # Send text-only notification for messages without media
-                    await self.client.send_message(notification_target, notification)
-                    logging.info(f"✅ Text notification sent to {notification_target} for keywords: {keywords_str} in {chat_title}")
+                # Check settings for media handling
+                settings = self.config.get('settings', {})
+                forward_media = settings.get('forward_media', True)
+                media_only_forward = settings.get('media_only_forward', True)
+                
+                # Always send to Saved Messages for guaranteed notifications (if enabled)
+                if send_to_saved_messages:
+                    await self.client.send_message('me', notification)
+                    logging.info(f"✅ Notification sent to Saved Messages for guaranteed push notification")
+                
+                # Send to configured channel/target
+                if notification_mode != 'saved_messages_only':
+                    if not (has_media and media_only_forward):
+                        # Send text notification for non-media or when not media-only mode
+                        await self.client.send_message(notification_target, notification)
+                        logging.info(f"✅ Text notification sent to {notification_target} for keywords: {keywords_str} in {chat_title}")
+                    
+                    # Handle media forwarding
+                    if has_media and forward_media:
+                        try:
+                            await self.client.forward_messages(notification_target, original_message)
+                            logging.info(f"✅ Media forwarded to {notification_target}")
+                            
+                            # If media_only_forward is true, send a short notification text too
+                            if media_only_forward:
+                                short_notification = f"🔍 {', '.join(keywords)} in {chat_title}"
+                                await self.client.send_message(notification_target, short_notification)
+                                logging.info(f"✅ Short notification sent for media message")
+                                
+                        except Exception as media_error:
+                            logging.warning(f"Media forward failed: {media_error}")
+                            # Fallback to text notification if media forward fails
+                            await self.client.send_message(notification_target, notification)
+                            logging.info(f"✅ Fallback text notification sent")
                     
             except Exception as e1:
                 logging.warning(f"Failed to send to {notification_target}: {e1}")
