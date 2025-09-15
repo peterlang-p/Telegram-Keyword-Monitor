@@ -22,6 +22,10 @@ mkdir -p data logs
 export UID=$(id -u)
 export GID=$(id -g)
 
+# Set user ID environment variables for docker-compose
+export UID=$(id -u)
+export GID=$(id -g)
+
 # Check if session file exists
 if [ ! -f "data/telegram_monitor.session" ]; then
     echo "⚠️  No Telegram session found!"
